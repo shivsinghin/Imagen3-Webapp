@@ -39,7 +39,7 @@ The following image was generated using this prompt:
 1. Clone the repository:
 
 bash
-git clone https://github.com/yourusername/imagen3-webapp.git
+git clone https://github.com/shivsinghin/Imagen3-Webapp.git
 cd imagen3-webapp
 
 3. Set up your Google Cloud Project:
