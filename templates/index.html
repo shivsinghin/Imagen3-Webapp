@@ -1,0 +1,303 @@
+<!-- Add comments at the start of the file -->
+<!--
+This template implements a web interface for image generation using Imagen 3.0.
+Key features:
+- Responsive design using Tailwind CSS
+- Image generation form with customizable parameters
+- Real-time loading indicators
+- Modal image viewer
+- Download functionality
+- Glass morphism navigation bar
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imagen3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .loader {
+            border-top-color: #3498db;
+            -webkit-animation: spinner 1.5s linear infinite;
+            animation: spinner 1.5s linear infinite;
+        }
+
+        @-webkit-keyframes spinner {
+            0% { -webkit-transform: rotate(0deg); }
+            100% { -webkit-transform: rotate(360deg); }
+        }
+
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 90%;
+        }
+        .nav-item {
+            @apply px-4 py-2 rounded-lg transition-all duration-300 flex items-center gap-2;
+        }
+        .nav-item:hover {
+            @apply bg-gray-100;
+        }
+        .active-nav {
+            @apply bg-black text-white;
+        }
+        .preloader {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: conic-gradient(#0000 10%, #3498db);
+            -webkit-mask: radial-gradient(farthest-side,#0000 calc(100% - 8px),#000 0);
+            animation: preloader 1s infinite linear;
+        }
+        @keyframes preloader {
+            to {transform: rotate(1turn)}
+        }
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .glass-nav.scrolled {
+            background: rgba(171, 203, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="glass-nav fixed w-full z-50 py-4 px-6 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center">
+                <img src="{{ url_for('static', filename='logo.png') }}" 
+                    alt="Logo" 
+                    class="h-8 w-auto mr-3">
+            </div>
+        </div>
+    </nav>
+
+    <br><br>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 pt-20 py-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-2xl border border-gray-200 p-8">
+                <div class="space-y-6">
+                    <!-- Prompt Input -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Prompt</label>
+                        <textarea
+                            id="prompt"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200/60 focus:ring-1 focus:ring-gray-200 focus:border-gray-300 transition-all duration-300"
+                            rows="4"
+                            placeholder="Describe what you want to generate..."
+                        ></textarea>
+                    </div>
+
+                    <!-- Negative Prompt -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Negative Prompt</label>
+                        <textarea
+                            id="negative_prompt"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200/60 focus:ring-1 focus:ring-gray-200 focus:border-gray-300 transition-all duration-300"
+                            rows="2"
+                        >bad anatomy, blurry, distorted features, poorly drawn hands</textarea>
+                    </div>
+
+                    <!-- Controls Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Seed</label>
+                            <input
+                                type="number"
+                                id="seed"
+                                class="w-full px-4 py-2 rounded-xl border border-gray-200/60 focus:ring-1 focus:ring-gray-200 focus:border-gray-300 transition-all duration-300"
+                                value="100"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Number of Images</label>
+                            <input
+                                type="number"
+                                id="number_of_images"
+                                class="w-full px-4 py-2 rounded-xl border border-gray-200/60 focus:ring-1 focus:ring-gray-200 focus:border-gray-300 transition-all duration-300"
+                                value="1"
+                                min="1"
+                                max="4"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Aspect Ratio</label>
+                            <select
+                                id="aspect_ratio"
+                                class="w-full px-4 py-2 rounded-xl border border-gray-200/60 focus:ring-1 focus:ring-gray-200 focus:border-gray-300 transition-all duration-300"
+                            >
+                                <option value="1:1">1:1 (Square)</option>
+                                <option value="3:4">3:4 (Portrait)</option>
+                                <option value="4:3">4:3 (Landscape)</option>
+                                <option value="16:9">16:9 (Widescreen)</option>
+                                <option value="9:16">9:16 (Vertical)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Generate Button -->
+                    <button
+                        onclick="generateImages()"
+                        class="w-full bg-black hover:bg-gray-800 text-white font-medium py-3 px-6 rounded-xl transition duration-300"
+                        id="generateBtn"
+                    >
+                        <i class="fas fa-magic mr-2"></i> Generate Images
+                    </button>
+                </div>
+            </div>
+
+            <!-- New Preloader -->
+            <div id="loader" class="hidden mt-8 flex justify-center">
+                <div class="preloader"></div>
+            </div>
+
+            <!-- Results Grid -->
+            <div id="results" class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="image-modal fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 transition-opacity hidden">
+        <button class="absolute top-5 right-5 text-white text-3xl hover:text-gray-300 transition" onclick="closeModal()">
+            &times;
+        </button>
+        <div class="relative p-4 max-w-4xl w-full">
+            <img id="modalImage" class="modal-content w-full max-h-[80vh] rounded-lg shadow-lg transition-transform transform scale-95">
+        </div>
+    </div>
+
+    <script>
+        function openModal(imageSrc) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.style.display = "flex";
+            modalImg.src = imageSrc;
+        }
+
+        function closeModal() {
+            document.getElementById('imageModal').style.display = "none";
+        }
+
+        function downloadImage(base64Data) {
+            const link = document.createElement('a');
+            link.href = `data:image/png;base64,${base64Data}`;
+            link.download = 'generated-image.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        async function generateImages() {
+            const prompt = document.getElementById('prompt').value;
+            const negative_prompt = document.getElementById('negative_prompt').value;
+            const seed = document.getElementById('seed').value;
+            const number_of_images = document.getElementById('number_of_images').value;
+            const aspect_ratio = document.getElementById('aspect_ratio').value;
+
+            if (!prompt) {
+                alert('Please enter a prompt');
+                return;
+            }
+
+            document.getElementById('loader').classList.remove('hidden');
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('results').innerHTML = '';
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt,
+                        negative_prompt,
+                        seed,
+                        number_of_images,
+                        aspect_ratio
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const resultsContainer = document.getElementById('results');
+                    data.images.forEach(imageData => {
+                        const imgElement = document.createElement('div');
+                        imgElement.className = 'bg-white rounded-lg shadow-lg p-4 transform hover:scale-102 transition duration-300';
+                        const imageSrc = `data:image/png;base64,${imageData}`;
+                        imgElement.innerHTML = `
+                            <div class="relative group">
+                                <img src="${imageSrc}" 
+                                     class="w-full h-auto rounded cursor-pointer" 
+                                     alt="Generated Image"
+                                     onclick="openModal('${imageSrc}')">
+                                <div class="absolute bottom-0 left-0 right-0 p-2 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center gap-4">
+                                    <button onclick="openModal('${imageSrc}')" class="text-white hover:text-blue-300">
+                                        <i class="fas fa-search-plus"></i> Zoom
+                                    </button>
+                                    <button onclick="downloadImage('${imageData}')" class="text-white hover:text-green-300">
+                                        <i class="fas fa-download"></i> Download
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        resultsContainer.appendChild(imgElement);
+                    });
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('generateBtn').disabled = false;
+            }
+        }
+
+        // Close modal when clicking outside the image
+        document.getElementById('imageModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        window.addEventListener('scroll', function() {
+            const nav = document.querySelector('.glass-nav');
+            if (window.scrollY > 10) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+        });
+    </script>
+</body>
+</html>
