@@ -1,14 +1,10 @@
 # Imagen3 WebApp
 
 <div align="center">
-  <img src="assets/cover-image.jpg" alt="Imagen3 Demo" width="100%">
+  <img src="assets/screenshot.png" alt="Application Screenshot" width="100%">
 </div>
 
 A powerful web application leveraging Google's Imagen 3.0 model to generate high-quality images with enhanced detail, richer lighting, and fewer artifacts. This application provides an intuitive interface for AI image generation with advanced customization options.
-
-<div align="center">
-  <img src="assets/screenshot.png" alt="Application Screenshot" width="100%">
-</div>
 
 ## ✨ Features
 
@@ -22,6 +18,10 @@ A powerful web application leveraging Google's Imagen 3.0 model to generate high
 - ⬇️ Direct image download capability
 
 ## 🚀 Demo Result
+
+<div align="center">
+  <img src="assets/cover-image.jpg" alt="Imagen3 Demo" width="100%">
+</div>
 
 The following image was generated using this prompt:
 
