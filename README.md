@@ -37,8 +37,10 @@ The following image was generated using this prompt:
 ## ⚙️ Installation
 
 1. Clone the repository:
-- git clone https://github.com/shivsinghin/Imagen3-Webapp.git
-- cd imagen3-webapp
+```bash
+git clone https://github.com/shivsinghin/Imagen3-Webapp.git
+cd imagen3-webapp
+```
 
 3. Set up your Google Cloud Project:
    - Create a project in Google Cloud Console
@@ -48,7 +50,9 @@ The following image was generated using this prompt:
 
 4. Run the application:
 
-- python app.py
+ ```bash
+python app.py
+```
 
 ## 🔑 Environment Variables
 
